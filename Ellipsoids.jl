@@ -11,25 +11,32 @@ using PyPlot
 
 export Ellipsoid, outer_ellipsoid, inner_ellipsoid, plot_ellipsoid, plot_points, plot_polygon
 
+"""
+Represents an ellipsoid with L (lower-triangular matrix, Cholesky factor of quadratic representation) and c (center point)
+"""
 type Ellipsoid{T}
-    # Represents an ellipsoid with L (cholesky factorization of quadratic form matrix), and c
-    # See https://tcg.mae.cornell.edu/pubs/Pope_FDA_08.pdf for details
     L::Array{T, 2}
     c::Array{T, 1}
     n_dims::Int64
 end
 
+"""
+Constructs an Ellipsoid object given the representation type. See https://tcg.mae.cornell.edu/pubs/Pope_FDA_08.pdf for details
+* forward = forward image of unit ball under affine mapping
+* backward = inverse image of unit ball under affine mapping
+* quadratic = sublevel-set of quadratic function
+"""
 Ellipsoid{T}(A::Array{T, 2}, b::Array{T, 1}, rep::String) = begin
     @assert size(A,2) == length(b)
 
-    if rep=="forward"
+    if rep=="forward" # {Av+b | norm(v) <= 1}
         L = inv(A)'
         c = b
-    elseif rep=="inverse"
+    elseif rep=="inverse" # {x | norm(Ax+b) <= 1}
         L = A'
         c = -inv(L')*b
-    elseif rep=="quadratic"
-        L = Vector(chol(A))'
+    elseif rep=="quadratic" # {x | (x-b)'A(x-b) <= 1}
+        L = Array(chol(A))'
         c = b
     else
         error("Representation must be one of: forward, inverse, quadratic")
@@ -41,6 +48,9 @@ end
 
 Ellipsoid{T}(A::Array{T, 2}, c::Array{T, 2}, rep::String) = Ellipsoid(A, vec(c), rep)
 
+"""
+Finds minimum-volume ellipsoid that contains all points.
+"""
 function outer_ellipsoid{T}(points::Vector{T}, plot::Bool=false)
     n_dims = length(points[1])
     if length(points) <= n_dims
@@ -68,6 +78,10 @@ function outer_ellipsoid{T}(points::Vector{T}, plot::Bool=false)
     return ell
 end
 
+"""
+Finds maximum-volume ellipsoid that is inside polyhedron defined by points (convex hull)
+Uses double-description method to convert point representation to inequalities.
+"""
 function inner_ellipsoid{T}(points::Vector{T}, plot::Bool=false)
     n_dims = length(points[1])
     if length(points) <= n_dims
@@ -89,6 +103,9 @@ function inner_ellipsoid{T}(points::Vector{T}, plot::Bool=false)
     return inner_ellipsoid(Ah, bh, plot)
 end
 
+"""
+Finds maximum-volume ellipsoid that is inside polyhedron defined by points (convex hull).
+"""
 function inner_ellipsoid{T}(A::Array{T,2}, b::Array{T,1}, plot::Bool=false)
     n_dims = size(A)[2]
     B = Variable(n_dims,n_dims)
@@ -111,7 +128,9 @@ function inner_ellipsoid{T}(A::Array{T,2}, b::Array{T,1}, plot::Bool=false)
     return ell
 end
 
-# Use forward image representation to plot, since it's the easiest to understand
+"""
+Use forward image representation to plot, since it's the easiest to understand
+"""
 function plot_ellipsoid{T}(E::Ellipsoid{T})
     A = inv(E.L)'
     c = E.c
@@ -188,6 +207,7 @@ function list_to_stack{T}(v::Vector{T})
     return stack
 end
 
+# TODO add confidence ellipsoids
 # TODO run instantiation of Float64 to precompile?
 
 end # module
