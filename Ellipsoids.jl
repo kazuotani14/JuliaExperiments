@@ -23,13 +23,13 @@ module Ell
         @assert size(A,2) == length(b)
 
         if rep=="forward"
-            L = inv(A')
+            L = inv(A)'
             c = b
         elseif rep=="inverse"
             L = A'
-            c = inv(L')*b
+            c = -inv(L')*b
         elseif rep=="quadratic"
-            L = Array(chol(A))'
+            L = Vector(chol(A))'
             c = b
         else
             error("Representation must be one of: forward, inverse, quadratic")
@@ -41,10 +41,9 @@ module Ell
 
     Ellipsoid{T}(A::Array{T, 2}, c::Array{T, 2}, rep::String) = Ellipsoid(A, vec(c), rep)
 
-    # # Use forward image representation to plot, since it's the easiest to understand (for me)
-    # TODO is it better to use inverse, since transpose is less expensive than inverse? (for A)
+    # # Use forward image representation to plot, since it's the easiest to understand
     function plot_ellipsoid{T}(E::Ellipsoid{T})
-        A = inv(E.L') # TODO do operation here
+        A = inv(E.L)'
         c = E.c
 
         n_dims = size(A,2)
@@ -54,6 +53,8 @@ module Ell
             u_vecs = [cos.(angles) sin.(angles)]'
         elseif n_dims==3
             angles = collect(0 : 0.3 : 2*pi)
+
+            # TODO make this concise...
             u_vecs = []
             for i in angles
                 for j in angles
@@ -65,7 +66,7 @@ module Ell
                 end
             end
         else
-            println("Can't plot ellipsoid that aren't 2D or 3D")
+            println("Can't plot ellipsoids that aren't 2D or 3D")
             return
         end
 
@@ -97,7 +98,7 @@ module Ell
 
         A, b = A.value, b.value
 
-        c = A \ b
+        c = A \ b # TODO check this
 
         return Ellipsoid(A, c,  "inverse")
     end
