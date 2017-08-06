@@ -1,3 +1,5 @@
+# Note: this is incomplete
+
 module PrimalDualQPSolver
 
 using Convex, SCS
@@ -54,7 +56,7 @@ function primaldual_interiorpoint_solve(Q::Array, q::Array, # assume that both Q
 
     print(x,y,z)
 
-    #TODO 
+    #TODO
 
     # imat = eye(n)
     # zmat = zeros(n,n)
